@@ -19,7 +19,7 @@
         const FRAME_TIME = 1000 / TARGET_FPS;
 
         const gravity = 0.5;
-        const friction = 0.8;
+        const friction = 0.88;
         const baseJump = -10;
 
         // Score & game state
@@ -64,7 +64,7 @@
             y: canvas.height - 150,
             width: 20,
             height: 20,
-            speed: 5,
+            speed: 8,
             velX: 0,
             velY: 0,
             jumping: false
@@ -75,7 +75,15 @@
         function initPlatforms() {
             platformCounter = 0;
             platforms = [];
-            for (let i = 0; i < 10; i++) {
+            // Safe floor: full width, no enemy, never collapses
+            platforms.push({
+                x: 0, y: canvas.height - 50,
+                width: canvas.width, height: 10,
+                number: 0,
+                standTimer: 0, isStoodOn: false, falling: false, fallSpeed: 0,
+                safe: true, enemy: null
+            });
+            for (let i = 1; i < 10; i++) {
                 platforms.push(createPlatform(
                     Math.random() * (canvas.width - 100),
                     canvas.height - (100 * i) - 50
@@ -88,9 +96,9 @@
         let keys = [];
         window.addEventListener('keydown', function(e) {
             keys[e.keyCode] = true;
-            if (e.keyCode === 32 && !player.jumping) {
+            if ((e.keyCode === 32 || e.keyCode === 38) && !player.jumping) {
                 player.jumping = true;
-                player.velY = baseJump - Math.abs(player.velX);
+                player.velY = baseJump - Math.abs(player.velX) * 0.5;
             }
             if ((e.key === 'r' || e.key === 'R') && gameOver) {
                 restartGame();
@@ -117,12 +125,8 @@
         function updateGame() {
             if (gameOver) return;
 
-            if (keys[39]) {
-                if (player.velX < player.speed) player.velX += 1;
-            }
-            if (keys[37]) {
-                if (player.velX > -player.speed) player.velX -= 1;
-            }
+            if (keys[39]) player.velX = Math.min(player.velX + 1.5, player.speed);
+            if (keys[37]) player.velX = Math.max(player.velX - 1.5, -player.speed);
 
             player.velX *= friction;
             player.velY += gravity;
@@ -156,22 +160,26 @@
                     platform.x = Math.random() * (canvas.width - platform.width);
                     platformCounter++;
                     platform.number = platformCounter;
+                    platform.width = 100;
                     platform.standTimer = 0;
                     platform.isStoodOn = false;
                     platform.falling = false;
                     platform.fallSpeed = 0;
+                    platform.safe = false;
                     platform.enemy = createEnemy(platform);
                 }
             });
 
-            // Canvas edges
+            // Canvas edges: wall bounce — reverse and slightly boost horizontal speed
             if (player.x >= canvas.width - player.width) {
                 player.x = canvas.width - player.width;
-                player.velX = 0;
+                player.velX = -Math.abs(player.velX) * 1.1;
             } else if (player.x <= 0) {
                 player.x = 0;
-                player.velX = 0;
+                player.velX = Math.abs(player.velX) * 1.1;
             }
+            // Clamp after boost
+            player.velX = Math.max(-player.speed, Math.min(player.speed, player.velX));
 
             // Death: fell off bottom
             if (player.y >= canvas.height - player.height) {
@@ -199,9 +207,9 @@
                 }
             });
 
-            // Stand timer: fall after 4 seconds
+            // Stand timer: fall after 4 seconds (safe platform is immune)
             platforms.forEach(platform => {
-                if (platform.falling) return;
+                if (platform.falling || platform.safe) return;
                 if (platform.isStoodOn) {
                     platform.standTimer += FRAME_TIME;
                     if (platform.standTimer >= 4000) platform.falling = true;
