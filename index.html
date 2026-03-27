@@ -191,14 +191,18 @@
             platforms.forEach(p => { p.isStoodOn = false; });
 
             // Platform collision (skip falling platforms)
+            // Uses a crossing check: did the player's bottom cross the platform's top this frame?
+            // This prevents fast-falling players from tunnelling through thin platforms.
             platforms.forEach(platform => {
                 if (platform.falling) return;
+                const playerBottom = player.y + player.height;
+                const prevPlayerBottom = playerBottom - player.velY;
                 if (
                     player.x < platform.x + platform.width &&
                     player.x + player.width > platform.x &&
-                    player.y + player.height > platform.y &&
-                    player.y + player.height < platform.y + platform.height &&
-                    player.velY >= 0
+                    prevPlayerBottom <= platform.y &&
+                    playerBottom >= platform.y &&
+                    player.velY > 0
                 ) {
                     player.jumping = false;
                     player.velY = 0;
