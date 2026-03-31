@@ -1,7 +1,7 @@
 function triggerGameOver() {
     if (gameOver) return;
     gameOver = true;
-    
+
     setTimeout(() => {
         if (highScores.length < 5 || score > (highScores.length > 0 ? highScores[highScores.length - 1].score : 0)) {
             let name = window.prompt("New High Score! Enter your name (max 10 chars):", "Player");
@@ -37,6 +37,13 @@ function updateGame() {
         score += Math.ceil(scrollAmount * speedMult * 0.5);
         player.y += scrollAmount;
         cameraY += scrollAmount; // Track camera scroll for background
+
+        if (tavernState === 1) {
+            tavernY += scrollAmount;
+            if (tavernFloorY !== null) tavernFloorY += scrollAmount;
+            if (tavernRoofY !== null) tavernRoofY += scrollAmount;
+        }
+
         platforms.forEach(p => {
             p.y += scrollAmount;
             if (p.moving) p.moveOriginY += scrollAmount;
@@ -44,16 +51,19 @@ function updateGame() {
         bullets.forEach(b => { b.y += scrollAmount; });
     }
 
+    // Removed the tavern camera lock and teleport mechanisms since
+    // the tavern is now traversable normally with regular scroll.
+
     // Decay speed multiplier
     speedMult = Math.max(1, speedMult - 0.008);
 
     // Move up/down platforms
     platforms.forEach(platform => {
         if (!platform.moving || platform.falling) return;
-        
+
         const dy = platform.moveDir * platform.moveSpeed;
         platform.y += dy;
-        
+
         if (platform.isStoodOn && !player.jumping) {
             player.y += dy;
         }
@@ -73,9 +83,87 @@ function updateGame() {
     // Recycle any platform that exited the bottom
     platforms.forEach(platform => {
         if (platform.y <= canvas.height + 50) return;
+
+        platformCounter++;
+
+        if (platformCounter === TAVERN_SPAWN_PLATFORM && tavernState === 0) {
+            tavernState = 1;
+
+            // Calculate highest (geometrically top-most) platform to place the tavern exactly 30px above
+            const currentHighestY = Math.min(...platforms.map(p => p.y));
+
+            // Calculate natural tavern dimensions
+            let tW = canvas.width;
+            let tH = 300;
+            if (images['tavern']) {
+                tH = tW * (images['tavern'].height / images['tavern'].width);
+            }
+
+            // Floor is 30px above the highest normal platform
+            const floorY = currentHighestY - 30;
+            // Floor is rendered 40px above the physical bottom of the image, so tavernY tracks the floor
+            tavernY = floorY;
+            tavernFloorY = floorY;
+
+            // Roof is completely at the top of the image
+            const roofY = floorY + 40 - tH;
+            tavernRoofY = roofY;
+
+            // Spawn Tavern Floor platform (we convert this recycled platform into the floor)
+            platform.x = 0;
+            platform.y = floorY;
+            platform.width = canvas.width;
+            platform.number = platformCounter;
+            platform.standTimer = 0;
+            platform.isStoodOn = false;
+            platform.falling = false;
+            platform.fallSpeed = 0;
+            platform.safe = true;
+            platform.isTavern = true;
+            platform.isLadder = false;
+            platform.moving = false;
+            platform.moveDir = 1;
+            platform.moveSpeed = 0;
+            platform.moveRange = 0;
+            platform.moveOriginY = platform.y;
+            platform.star = null;
+            platform.spring = null;
+            platform.enemy = null;
+
+            // Add invisible ladder platforms on the left wall to climb to the roof
+            // Gap should be ~60px
+            const ladderCount = Math.max(0, Math.floor((floorY - roofY) / 60) - 1);
+            for (let i = 1; i <= ladderCount; i++) {
+                const lY = floorY - (60 * i);
+                platforms.push({
+                    x: 60, y: lY, width: 40, height: 10,
+                    number: ++platformCounter, standTimer: 0, isStoodOn: false, falling: false, fallSpeed: 0,
+                    safe: true, isLadder: true, isTavern: true, moving: false, moveDir: 1, moveSpeed: 0, moveRange: 0, moveOriginY: lY,
+                    star: null, spring: null, enemy: null
+                });
+            }
+
+            // Directly push the Roof platform (so it spawns immediately)
+            platforms.push({
+                x: 0, y: roofY, width: canvas.width, height: 10,
+                number: ++platformCounter, standTimer: 0, isStoodOn: false, falling: false, fallSpeed: 0,
+                safe: true, isTavern: true, isLadder: false, moving: false, moveDir: 1, moveSpeed: 0, moveRange: 0, moveOriginY: roofY,
+                star: null, spring: null, enemy: null
+            });
+
+            // Add one immediate extra platform EXACTLY 30px above the newly spawned roof
+            platforms.push({
+                x: nonOverlapX(roofY - 30, 80), y: roofY - 30, width: 80, height: 10,
+                number: ++platformCounter, standTimer: 0, isStoodOn: false, falling: false, fallSpeed: 0,
+                safe: true, isTavern: false, isLadder: false, moving: false, moveDir: 1, moveSpeed: 0, moveRange: 0, moveOriginY: roofY - 30,
+                star: null, spring: null, enemy: null
+            });
+
+            return;
+        }
+
         const newW = randomPlatformWidth();
         const pos = findRecyclePos(newW);
-        platformCounter++;
         platform.x = pos.x;
         platform.y = pos.y;
         platform.width = newW;
@@ -85,6 +173,8 @@ function updateGame() {
         platform.falling = false;
         platform.fallSpeed = 0;
         platform.safe = false;
+        platform.isTavern = false;
+        platform.isLadder = false;
         platform.moving = Math.random() < 0.06;
         platform.moveDir = 1;
         platform.moveSpeed = 0.6;
@@ -189,8 +279,8 @@ function updateEnemies() {
         // Type 2: move side to side within platform bounds
         if (e.type === 2) {
             e.offsetX += e.velX;
-            if (e.offsetX <= 0)                          { e.offsetX = 0; e.velX = 1; }
-            if (e.offsetX + e.width >= platform.width)   { e.offsetX = platform.width - e.width; e.velX = -1; }
+            if (e.offsetX <= 0) { e.offsetX = 0; e.velX = 1; }
+            if (e.offsetX + e.width >= platform.width) { e.offsetX = platform.width - e.width; e.velX = -1; }
         }
 
         // Type 3: shoot toward player every shootInterval frames

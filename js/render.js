@@ -49,8 +49,22 @@ function drawGame() {
         if (images['wall_right']) ctx.drawImage(images['wall_right'], canvas.width - tileSize, y, tileSize, tileSize);
     }
 
+    // Draw Tavern if active
+    if (tavernState === 1 || tavernState === 2) {
+        if (images['tavern']) {
+            const aspect = images['tavern'].height / images['tavern'].width;
+            const tW = canvas.width;
+            const tH = tW * aspect;
+            // Draw sitting perfectly on the floor (tavernY is the visual floor, bottom is 40px below the floor)
+            ctx.drawImage(images['tavern'], 0, tavernY - tH + 40, tW, tH);
+        }
+    }
+
     // Draw platforms
     platforms.forEach(platform => {
+        // Skip rendering invisible hitboxes for the tavern
+        if (platform.isLadder || platform.isTavern) return;
+
         // Colour: falling=Tomato, moving=Steel Blue, normal=Tan
         ctx.fillStyle = platform.falling ? '#FF6347' : platform.moving ? '#4682B4' : '#D2B48C';
         ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
@@ -255,5 +269,17 @@ function drawGame() {
         ctx.font = '15px Arial';
         ctx.fillStyle = '#ccc';
         ctx.fillText('Press R to restart', canvas.width / 2, canvas.height - 40);
+    } else if (isPaused) {
+        // Pause Menu overlay
+        ctx.fillStyle = 'rgba(0,0,0,0.6)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        ctx.fillStyle = 'white';
+        ctx.textAlign = 'center';
+        ctx.font = 'bold 40px Arial';
+        ctx.fillText('PAUSED', canvas.width / 2, canvas.height / 2 - 20);
+        
+        ctx.font = '20px Arial';
+        ctx.fillText('Press ESC to Resume', canvas.width / 2, canvas.height / 2 + 30);
     }
 }

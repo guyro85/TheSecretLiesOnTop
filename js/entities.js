@@ -21,6 +21,10 @@ function randomPlatformWidth() {
 
 // Returns true if any existing platform is within MIN_PLATFORM_GAP vertically of y
 function tooCloseVertically(y) {
+    if (tavernFloorY !== null && tavernRoofY !== null) {
+        // Prevent platforms from generating inside the visual tavern interior
+        if (y < tavernFloorY && y > tavernRoofY) return true;
+    }
     return platforms.some(p => Math.abs(p.y - y) < MIN_PLATFORM_GAP);
 }
 

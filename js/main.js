@@ -21,9 +21,14 @@ function initPlatforms() {
 function restartGame() {
     score = 0;
     gameOver = false;
+    isPaused = false;
     speedMult = 1;
     starTimer = 0;
     cameraY = 0; // Reset cameraY
+    tavernState = 0;
+    tavernY = 0;
+    tavernFloorY = null;
+    tavernRoofY = null;
     bullets = [];
     keys.length = 0;
     player.x = canvas.width / 2;
@@ -32,6 +37,27 @@ function restartGame() {
     player.velY = 0;
     player.jumping = false;
     initPlatforms();
+}
+
+function spawnPostTavernPlatforms() {
+    platforms = []; // Clear the tavern platforms
+    // Provide a safe landing block below where the player enters, or let them just fall normally into a platform?
+    // We can spawn a temporary safe floor for them to land on, then standard platforms above.
+    platforms.push({
+        x: canvas.width / 2 - 40, y: player.y + player.height + 20,
+        width: 80, height: 10,
+        number: platformCounter,
+        standTimer: 0, isStoodOn: false, falling: false, fallSpeed: 0,
+        moving: false, moveDir: 1, moveSpeed: 0, moveRange: 0, moveOriginY: player.y + player.height + 20,
+        safe: true, enemy: null, star: null, spring: null
+    });
+    // Now spawn normal platforms stretching upwards
+    for (let i = 1; i < 12; i++) {
+        const y = player.y - (70 * i);
+        const w = randomPlatformWidth();
+        const x = nonOverlapX(y, w);
+        platforms.push(createPlatform(x, y, w));
+    }
 }
 
 let lastTime = 0;
@@ -46,7 +72,9 @@ function gameLoop(timestamp) {
     if (assetsLoaded) {
         accumulator += deltaTime;
         while (accumulator >= FRAME_TIME) {
-            updateGame();
+            if (!isPaused) {
+                updateGame();
+            }
             accumulator -= FRAME_TIME;
         }
         drawGame();
@@ -98,7 +126,8 @@ function loadImages(callback) {
         'wall_mid': 'wall_mid.png',
         'wall_right': 'wall_right.png',
         'wall_hole_1': 'wall_hole_1.png',
-        'wall_hole_2': 'wall_hole_2.png'
+        'wall_hole_2': 'wall_hole_2.png',
+        'tavern': 'tavern.jpg'
     };
 
     let loadedCount = 0;

@@ -8,6 +8,9 @@ window.addEventListener('keydown', function(e) {
     if ((e.key === 'r' || e.key === 'R') && gameOver) {
         restartGame();
     }
+    if (e.key === 'Escape') {
+        if (!gameOver) isPaused = !isPaused;
+    }
 });
 
 window.addEventListener('keyup', function(e) {

@@ -13,6 +13,7 @@ const MIN_PLATFORM_GAP = 60;
 
 let score = 0;
 let gameOver = false;
+let isPaused = false;
 let speedMult = 1;
 let starTimer = 0; // frames of star-power remaining
 
@@ -40,3 +41,10 @@ let platforms = [];
 let cameraY = 0;
 let assetsLoaded = false;
 let images = {};
+
+// Tavern Logic
+const TAVERN_SPAWN_PLATFORM = 20; // Changed from 200 for easier testing
+let tavernState = 0; // 0: Default, 1: Spawning, 2: Locked, 3: Passed
+let tavernY = 0;
+let tavernFloorY = null;
+let tavernRoofY = null;
