@@ -1,0 +1,250 @@
+function triggerGameOver() {
+    if (gameOver) return;
+    gameOver = true;
+    
+    setTimeout(() => {
+        if (highScores.length < 5 || score > (highScores.length > 0 ? highScores[highScores.length - 1].score : 0)) {
+            let name = window.prompt("New High Score! Enter your name (max 10 chars):", "Player");
+            if (name !== null) {
+                name = name.trim().substring(0, 10);
+                if (name === "") name = "Unknown";
+                highScores.push({ name: name, score: score });
+                highScores.sort((a, b) => b.score - a.score);
+                if (highScores.length > 5) highScores.length = 5;
+                localStorage.setItem('greatTowerHighScores', JSON.stringify(highScores));
+            }
+        }
+    }, 50);
+}
+
+function updateGame() {
+    if (gameOver) return;
+
+    if (keys[39]) player.velX = Math.min(player.velX + 1.5, player.speed);
+    if (keys[37]) player.velX = Math.max(player.velX - 1.5, -player.speed);
+
+    player.velX *= friction;
+    player.velY += gravity;
+    player.x += player.velX;
+    player.y += player.velY;
+
+    if (starTimer > 0) starTimer--;
+
+    // Screen scroll
+    if (player.y < canvas.height / 4) {
+        const scrollAmount = Math.abs(player.velY);
+        speedMult = Math.min(4, speedMult + scrollAmount * 0.015);
+        score += Math.ceil(scrollAmount * speedMult * 0.5);
+        player.y += scrollAmount;
+        platforms.forEach(p => {
+            p.y += scrollAmount;
+            if (p.moving) p.moveOriginY += scrollAmount;
+        });
+        bullets.forEach(b => { b.y += scrollAmount; });
+    }
+
+    // Decay speed multiplier
+    speedMult = Math.max(1, speedMult - 0.008);
+
+    // Move up/down platforms
+    platforms.forEach(platform => {
+        if (!platform.moving || platform.falling) return;
+        
+        const dy = platform.moveDir * platform.moveSpeed;
+        platform.y += dy;
+        
+        if (platform.isStoodOn && !player.jumping) {
+            player.y += dy;
+        }
+
+        if (Math.abs(platform.y - platform.moveOriginY) >= platform.moveRange) {
+            platform.moveDir *= -1;
+        }
+    });
+
+    // Move falling platforms
+    platforms.forEach(platform => {
+        if (!platform.falling) return;
+        platform.fallSpeed += 0.3;
+        platform.y += platform.fallSpeed;
+    });
+
+    // Recycle any platform that exited the bottom
+    platforms.forEach(platform => {
+        if (platform.y <= canvas.height + 50) return;
+        const newW = randomPlatformWidth();
+        const pos = findRecyclePos(newW);
+        platformCounter++;
+        platform.x = pos.x;
+        platform.y = pos.y;
+        platform.width = newW;
+        platform.number = platformCounter;
+        platform.standTimer = 0;
+        platform.isStoodOn = false;
+        platform.falling = false;
+        platform.fallSpeed = 0;
+        platform.safe = false;
+        platform.moving = Math.random() < 0.06;
+        platform.moveDir = 1;
+        platform.moveSpeed = 0.6;
+        platform.moveRange = 55;
+        platform.moveOriginY = platform.y;
+        platform.star = Math.random() < 0.05
+            ? { offsetX: Math.floor(Math.random() * Math.max(1, newW - 16)), width: 16, height: 16, collected: false }
+            : null;
+        platform.spring = (!platform.star && Math.random() < 0.04)
+            ? { offsetX: Math.floor(Math.max(0, newW / 2 - 8)), width: Math.min(16, newW), height: 14 }
+            : null;
+        platform.enemy = createEnemy(platform);
+    });
+
+    // Canvas edges: wall bounce
+    if (player.x >= canvas.width - player.width) {
+        player.x = canvas.width - player.width;
+        player.velX = -Math.abs(player.velX) * 1.1;
+    } else if (player.x <= 0) {
+        player.x = 0;
+        player.velX = Math.abs(player.velX) * 1.1;
+    }
+    player.velX = Math.max(-player.speed, Math.min(player.speed, player.velX));
+
+    // Death: fell off bottom
+    if (player.y >= canvas.height - player.height) {
+        triggerGameOver();
+        return;
+    }
+
+    // Reset stood-on flags
+    platforms.forEach(p => { p.isStoodOn = false; });
+
+    // Platform collision
+    platforms.forEach(platform => {
+        if (platform.falling) return;
+        const playerBottom = player.y + player.height;
+        const prevPlayerBottom = playerBottom - player.velY;
+        if (
+            player.x < platform.x + platform.width &&
+            player.x + player.width > platform.x &&
+            prevPlayerBottom <= platform.y &&
+            playerBottom >= platform.y &&
+            player.velY > 0
+        ) {
+            // Spring check: if landing within the spring's x range, super-bounce
+            const sp = platform.spring;
+            if (sp) {
+                const sx = platform.x + sp.offsetX;
+                if (player.x + player.width > sx && player.x < sx + sp.width) {
+                    player.jumping = true;
+                    player.velY = -22;
+                    player.y = platform.y - player.height;
+                    return;
+                }
+            }
+            // Normal land
+            player.jumping = false;
+            player.velY = 0;
+            player.y = platform.y - player.height;
+            platform.isStoodOn = true;
+        }
+    });
+
+    // Star collection
+    platforms.forEach(platform => {
+        const st = platform.star;
+        if (!st || st.collected) return;
+        const sx = platform.x + st.offsetX;
+        const sy = platform.y - st.height;
+        if (
+            player.x < sx + st.width &&
+            player.x + player.width > sx &&
+            player.y < sy + st.height &&
+            player.y + player.height > sy
+        ) {
+            st.collected = true;
+            starTimer = 360; // 6 seconds at 60 fps
+        }
+    });
+
+    // Stand timer: fall after 4 seconds (safe platform immune)
+    platforms.forEach(platform => {
+        if (platform.falling || platform.safe) return;
+        if (platform.isStoodOn) {
+            platform.standTimer += FRAME_TIME;
+            if (platform.standTimer >= 4000) platform.falling = true;
+        } else {
+            platform.standTimer = 0;
+        }
+    });
+
+    updateEnemies();
+    updateBullets();
+}
+
+function updateEnemies() {
+    platforms.forEach(platform => {
+        const e = platform.enemy;
+        if (!e) return;
+
+        // Type 2: move side to side within platform bounds
+        if (e.type === 2) {
+            e.offsetX += e.velX;
+            if (e.offsetX <= 0)                          { e.offsetX = 0; e.velX = 1; }
+            if (e.offsetX + e.width >= platform.width)   { e.offsetX = platform.width - e.width; e.velX = -1; }
+        }
+
+        // Type 3: shoot toward player every shootInterval frames
+        if (e.type === 3) {
+            e.shootTimer++;
+            if (e.shootTimer >= e.shootInterval) {
+                e.shootTimer = 0;
+                const ex = platform.x + e.offsetX + e.width / 2;
+                const ey = platform.y - e.height / 2;
+                const dx = (player.x + player.width / 2) - ex;
+                const dy = (player.y + player.height / 2) - ey;
+                const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+                bullets.push({ x: ex, y: ey, velX: dx / dist * 3, velY: dy / dist * 3, r: 4 });
+            }
+        }
+
+        // Collision: star power kills enemy; otherwise game over
+        const ex = platform.x + e.offsetX;
+        const ey = platform.y - e.height;
+        if (!gameOver &&
+            player.x < ex + e.width &&
+            player.x + player.width > ex &&
+            player.y < ey + e.height &&
+            player.y + player.height > ey
+        ) {
+            if (starTimer > 0) {
+                platform.enemy = null;
+            } else {
+                triggerGameOver();
+            }
+        }
+    });
+}
+
+function updateBullets() {
+    for (let i = bullets.length - 1; i >= 0; i--) {
+        const b = bullets[i];
+        b.x += b.velX;
+        b.y += b.velY;
+
+        // Remove if off-screen
+        if (b.x < -20 || b.x > canvas.width + 20 || b.y < -20 || b.y > canvas.height + 20) {
+            bullets.splice(i, 1);
+            continue;
+        }
+
+        // Collision: bullet touches player → game over
+        if (!gameOver &&
+            player.x < b.x + b.r &&
+            player.x + player.width > b.x - b.r &&
+            player.y < b.y + b.r &&
+            player.y + player.height > b.y - b.r
+        ) {
+            triggerGameOver();
+            bullets.splice(i, 1);
+        }
+    }
+}
