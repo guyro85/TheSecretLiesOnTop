@@ -516,9 +516,11 @@ function drawGameplay() {
             });
         }
 
-        ctx.font = '15px Pixelify Sans';
-        ctx.fillStyle = '#ccc';
-        ctx.fillText('Press R to return', canvas.width / 2, canvas.height - 40);
+        const gameOverButtons = [
+            { text: 'Play Again', action: () => { restartGame(); } },
+            { text: 'Main Menu', action: () => { gameState = 'START_MENU'; selectedMenuIndex = 0; } }
+        ];
+        drawTextButtons(gameOverButtons, canvas.height - 100, 48);
     } else if (isPaused) {
         // Pause Menu overlay
         ctx.fillStyle = 'rgba(0,0,0,0.7)';

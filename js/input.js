@@ -46,8 +46,8 @@ window.addEventListener('keydown', function(e) {
         }
     }
 
-    // Menu keyboard navigation (menus + pause screen)
-    if ((gameState !== 'PLAYING' && gameState !== 'GAME_OVER') || isPaused) {
+    // Menu keyboard navigation (menus + pause screen + game over)
+    if ((gameState !== 'PLAYING' && gameState !== 'GAME_OVER') || isPaused || gameState === 'GAME_OVER') {
         if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
             e.preventDefault();
             selectedMenuIndex = (selectedMenuIndex + 1) % Math.max(1, menuButtons.length);
