@@ -68,7 +68,7 @@ function gameLoop(timestamp) {
     let deltaTime = timestamp - lastTime;
     lastTime = timestamp;
     if (deltaTime > 250) deltaTime = 250;
-    
+
     if (assetsLoaded) {
         accumulator += deltaTime;
         while (accumulator >= FRAME_TIME) {
@@ -83,11 +83,11 @@ function gameLoop(timestamp) {
         ctx.fillStyle = 'black';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = 'white';
-        ctx.font = '20px Arial';
+        ctx.font = '20px Pixelify Sans';
         ctx.textAlign = 'center';
         ctx.fillText('Loading Assets...', canvas.width / 2, canvas.height / 2);
     }
-    
+
     requestAnimationFrame(gameLoop);
 }
 

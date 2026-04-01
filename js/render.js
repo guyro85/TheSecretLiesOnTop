@@ -22,12 +22,12 @@ function drawGame() {
     // cameraY increases as we go up.
     // The tiles move down by (cameraY % tileSize)
     const offsetY = Math.floor(cameraY) % tileSize;
-    
+
     // Fill background with wall tiles
     for (let y = -tileSize + offsetY; y < canvas.height; y += tileSize) {
         // Draw left wall
         if (images['wall_left']) ctx.drawImage(images['wall_left'], 0, y, tileSize, tileSize);
-        
+
         // Draw middle walls
         if (images['wall_mid']) {
             const logicalRow = Math.floor((Math.floor(cameraY) - y) / tileSize);
@@ -40,11 +40,11 @@ function drawGame() {
                 let tileToDraw = images['wall_mid'];
                 if (r > 0.95 && images['wall_hole_1']) tileToDraw = images['wall_hole_1'];
                 else if (r > 0.90 && images['wall_hole_2']) tileToDraw = images['wall_hole_2'];
-                
+
                 ctx.drawImage(tileToDraw, x, y, Math.min(tileSize, canvas.width - tileSize - x), tileSize);
             }
         }
-        
+
         // Draw right wall
         if (images['wall_right']) ctx.drawImage(images['wall_right'], canvas.width - tileSize, y, tileSize, tileSize);
     }
@@ -79,7 +79,7 @@ function drawGame() {
         // Floor label on multiples of 10
         if (platform.number % 10 === 0) {
             ctx.save();
-            ctx.font = 'bold 9px Arial';
+            ctx.font = 'bold 9px Pixelify Sans';
             ctx.textAlign = 'center';
             ctx.lineWidth = 2;
             ctx.strokeStyle = 'black';
@@ -127,7 +127,7 @@ function drawGame() {
         if (!e) return;
         const ex = platform.x + e.offsetX;
         const ey = platform.y - e.height;
-        
+
         // Ensure width/height ratio makes sense, or adjust drawn size
         // Hitboxes are 20x20. We draw sprites slightly larger (32x32).
         const drawSizes = 32;
@@ -136,7 +136,7 @@ function drawGame() {
 
         let spriteName = '';
         let flip = false;
-        
+
         if (e.type === 1) { // Muddy
             spriteName = `muddy_${frameIndex}`;
         } else if (e.type === 2) { // Masked Orc (Moves side to side)
@@ -151,7 +151,7 @@ function drawGame() {
                 ctx.save();
                 ctx.translate(ex + e.width / 2, ey + e.height / 2);
                 ctx.scale(-1, 1);
-                ctx.drawImage(images[spriteName], -drawSizes/2, drawPy - (ey + e.height / 2), drawSizes, drawSizes);
+                ctx.drawImage(images[spriteName], -drawSizes / 2, drawPy - (ey + e.height / 2), drawSizes, drawSizes);
                 ctx.restore();
             } else {
                 ctx.drawImage(images[spriteName], drawPx, drawPy, drawSizes, drawSizes);
@@ -176,19 +176,19 @@ function drawGame() {
     const pTimer = Math.floor(Date.now() / 150) % 4;
     const isRunning = Math.abs(player.velX) > 0.5;
     const pSpriteName = isRunning ? `knight_run_${pTimer}` : `knight_idle_${pTimer}`;
-    
+
     // Default size and drawing positions for 32x32 sprite covering a 20x20 hitbox
     const pDrawSizes = 32;
     const pDrawPx = player.x + (player.width / 2) - (pDrawSizes / 2);
     // Align feet
-    const pDrawPy = player.y + player.height - pDrawSizes + 2; 
+    const pDrawPy = player.y + player.height - pDrawSizes + 2;
 
     // Flashes gold while star power is active
     if (starTimer > 0 && Math.floor(starTimer / 6) % 2 === 0) {
         ctx.globalAlpha = 0.5;
         ctx.fillStyle = '#FFD700';
         ctx.beginPath();
-        ctx.arc(player.x + player.width/2, player.y + player.height/2, 24, 0, Math.PI*2);
+        ctx.arc(player.x + player.width / 2, player.y + player.height / 2, 24, 0, Math.PI * 2);
         ctx.fill();
         ctx.globalAlpha = 1.0;
     }
@@ -214,16 +214,16 @@ function drawGame() {
     ctx.fillStyle = 'rgba(0,0,0,0.6)';
     ctx.fillRect(5, 5, 165, starTimer > 0 ? 75 : 55);
     ctx.fillStyle = 'white';
-    ctx.font = 'bold 16px Arial';
+    ctx.font = 'bold 16px Pixelify Sans';
     ctx.textAlign = 'left';
     ctx.fillText('Score: ' + score, 12, 26);
-    ctx.font = '13px Arial';
+    ctx.font = '13px Pixelify Sans';
     ctx.fillStyle = speedMult > 1.5 ? '#FFD700' : '#aaa';
     ctx.fillText('Speed \xd7' + speedMult.toFixed(1), 12, 48);
     if (starTimer > 0) {
         drawStarShape(22, 64, 8, '#FFD700');
         ctx.fillStyle = '#FFD700';
-        ctx.font = 'bold 13px Arial';
+        ctx.font = 'bold 13px Pixelify Sans';
         ctx.textAlign = 'left';
         ctx.fillText(Math.ceil(starTimer / 60) + 's', 36, 69);
     }
@@ -234,21 +234,21 @@ function drawGame() {
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = 'white';
         ctx.textAlign = 'center';
-        
-        ctx.font = 'bold 40px Arial';
+
+        ctx.font = 'bold 40px Pixelify Sans';
         ctx.fillText('GAME OVER', canvas.width / 2, 80);
-        
-        ctx.font = '22px Arial';
+
+        ctx.font = '22px Pixelify Sans';
         ctx.fillText('Final Score: ' + score, canvas.width / 2, 120);
-        
+
         // Draw Leaderboard
-        ctx.font = 'bold 20px Arial';
+        ctx.font = 'bold 20px Pixelify Sans';
         ctx.fillStyle = '#FFD700'; // Gold
         ctx.fillText('--- Top 5 Players ---', canvas.width / 2, 170);
-        
+
         let startY = 210;
         if (highScores.length === 0) {
-            ctx.font = '16px Arial';
+            ctx.font = '16px Pixelify Sans';
             ctx.fillStyle = 'white';
             ctx.fillText('No high scores yet!', canvas.width / 2, startY);
         } else {
@@ -256,30 +256,30 @@ function drawGame() {
             highScores.forEach((entry, index) => {
                 let text = `${index + 1}. ${entry.name} - ${entry.score}`;
                 if (entry.score === bestScore) {
-                    ctx.font = 'bold 18px Arial';
+                    ctx.font = 'bold 18px Pixelify Sans';
                     ctx.fillStyle = '#FFD700';
                 } else {
-                    ctx.font = '18px Arial';
+                    ctx.font = '18px Pixelify Sans';
                     ctx.fillStyle = 'white';
                 }
                 ctx.fillText(text, canvas.width / 2, startY + (index * 30));
             });
         }
 
-        ctx.font = '15px Arial';
+        ctx.font = '15px Pixelify Sans';
         ctx.fillStyle = '#ccc';
         ctx.fillText('Press R to restart', canvas.width / 2, canvas.height - 40);
     } else if (isPaused) {
         // Pause Menu overlay
         ctx.fillStyle = 'rgba(0,0,0,0.6)';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
+
         ctx.fillStyle = 'white';
         ctx.textAlign = 'center';
-        ctx.font = 'bold 40px Arial';
+        ctx.font = 'bold 40px Pixelify Sans';
         ctx.fillText('PAUSED', canvas.width / 2, canvas.height / 2 - 20);
-        
-        ctx.font = '20px Arial';
+
+        ctx.font = '20px Pixelify Sans';
         ctx.fillText('Press ESC to Resume', canvas.width / 2, canvas.height / 2 + 30);
     }
 }
