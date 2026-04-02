@@ -56,3 +56,20 @@ let tavernState = 0; // 0: Default, 1: Spawning, 2: Locked, 3: Passed
 let tavernY = 0;
 let tavernFloorY = null;
 let tavernRoofY = null;
+
+// Dwarf NPC Dialog
+const DWARF_DIALOG_TEXT = 'Greetings, adventurer!';
+const DWARF_INTERACT_RANGE = 80; // px from dwarf center that triggers "Press F"
+let dwarfDialogChars = 0;       // how many chars of the bubble dialog have been revealed
+let dwarfDialogActive = false;  // true once the tavern becomes visible
+
+// Dwarf interaction panel (opened by pressing F)
+const DWARF_INTERACT_LINES = [
+    "Ah, a weary traveler! The tower\nstretches endlessly above...",
+    "Rest here, friend. You look like\nyou could use some healing."
+];
+let dwarfInteracting = false;   // is the interaction panel open?
+let dwarfInteractPage = 0;      // which dialog line we are on
+let dwarfInteractChars = 0;     // typewriter progress for the current panel line
+let dwarfInteractOption = 0;    // 0 = Rest, 1 = Leave
+let dwarfHasRested = false;     // player may only rest once per tavern visit

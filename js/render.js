@@ -280,6 +280,82 @@ function drawGameplay() {
             // Draw sitting perfectly on the floor (tavernY is the visual floor, bottom is 40px below the floor)
             ctx.drawImage(images['tavern'], 0, tavernY - tH + 40, tW, tH);
         }
+
+        // Draw tavern dwarf NPC (idle animated, sits on the tavern floor, no damage on contact)
+        if (tavernFloorY !== null) {
+            const dFrame = Math.floor(Date.now() / 150) % 4;
+            const dSprite = images[`dwarf_idle_${dFrame}`];
+            const dSize = 40;
+            const dX = canvas.width - 40 - dSize; // 40px from the right wall
+            const dY = tavernFloorY - dSize;
+            const dCenterX = dX + dSize / 2;
+
+            if (dSprite) {
+                // Flip horizontally to face left
+                ctx.save();
+                ctx.translate(dX + dSize / 2, dY + dSize / 2);
+                ctx.scale(-1, 1);
+                ctx.drawImage(dSprite, -dSize / 2, -dSize / 2, dSize, dSize);
+                ctx.restore();
+            }
+
+            // Dialog bubble (appears as soon as tavern is active)
+            if (dwarfDialogActive && images['dialog_bubble']) {
+                const bubW = 130;
+                const bubH = 50;
+                const bubX = dCenterX - bubW / 2;
+                const bubY = dY - bubH - 8; // 8px gap above dwarf
+
+                // Bubble image (stretched to desired size, maintains pixel-art feel)
+                ctx.drawImage(images['dialog_bubble'], bubX, bubY, bubW, bubH);
+
+                // Typewriter text clipped to revealed chars
+                const visibleText = DWARF_DIALOG_TEXT.substring(0, dwarfDialogChars);
+                ctx.save();
+                ctx.font = '9px Pixelify Sans';
+                ctx.fillStyle = '#1a0a00';
+                ctx.textAlign = 'center';
+                // Word-wrap into two lines for narrow bubble
+                const words = visibleText.split(' ');
+                let line1 = '', line2 = '';
+                let switched = false;
+                for (const w of words) {
+                    const testLine = (switched ? line2 : line1) + (((switched ? line2 : line1) ? ' ' : '') + w);
+                    if (!switched && ctx.measureText(testLine).width > bubW - 16) {
+                        switched = true;
+                        line2 = w;
+                    } else if (switched) {
+                        line2 += (line2 ? ' ' : '') + w;
+                    } else {
+                        line1 = testLine;
+                    }
+                }
+                const textCX = dCenterX;
+                if (line2) {
+                    ctx.fillText(line1, textCX, bubY + 19);
+                    ctx.fillText(line2, textCX, bubY + 31);
+                } else {
+                    ctx.fillText(line1, textCX, bubY + 25);
+                }
+                ctx.restore();
+            }
+
+            // "Press F" proximity prompt
+            const playerCenterX = player.x + player.width / 2;
+            const dist = Math.abs(playerCenterX - dCenterX);
+            if (dist <= DWARF_INTERACT_RANGE && tavernState >= 1) {
+                ctx.save();
+                ctx.font = 'bold 11px Pixelify Sans';
+                ctx.fillStyle = 'white';
+                ctx.strokeStyle = 'black';
+                ctx.lineWidth = 2;
+                ctx.textAlign = 'center';
+                const promptY = dY - (dwarfDialogActive && images['dialog_bubble'] ? 68 : 12);
+                ctx.strokeText('Press F', dCenterX, promptY);
+                ctx.fillText('Press F', dCenterX, promptY);
+                ctx.restore();
+            }
+        }
     }
 
     // Draw platforms
@@ -475,6 +551,95 @@ function drawGameplay() {
             // Fallback: draw a simple coloured rect
             ctx.fillStyle = i < player.health ? '#E03030' : '#555';
             ctx.fillRect(hx, hy, heartSize, heartSize);
+        }
+    }
+
+    // === DWARF INTERACTION PANEL ===
+    if (dwarfInteracting) {
+        const panH = 130;
+        const panY = canvas.height - panH;
+        const panW = canvas.width;
+        const pad = 12;
+        const portraitSize = 48;
+
+        // Dark semi-transparent background
+        ctx.fillStyle = 'rgba(10, 5, 20, 0.92)';
+        ctx.fillRect(0, panY, panW, panH);
+        // Gold border top
+        ctx.fillStyle = '#7a5c00';
+        ctx.fillRect(0, panY, panW, 2);
+
+        // Dwarf portrait (idle frame)
+        const pFrame = Math.floor(Date.now() / 150) % 4;
+        const pSprite = images[`dwarf_idle_${pFrame}`];
+        if (pSprite) {
+            ctx.save();
+            // Flip to face right (into the panel)
+            ctx.translate(pad + portraitSize / 2, panY + pad + portraitSize / 2);
+            ctx.scale(-1, 1);
+            ctx.drawImage(pSprite, -portraitSize / 2, -portraitSize / 2, portraitSize, portraitSize);
+            ctx.restore();
+        }
+        // Portrait border
+        ctx.strokeStyle = '#7a5c00';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(pad, panY + pad, portraitSize, portraitSize);
+
+        // Speaker name
+        ctx.font = 'bold 11px Pixelify Sans';
+        ctx.fillStyle = '#FFD700';
+        ctx.textAlign = 'left';
+        ctx.fillText('Tavern Keeper', pad + portraitSize + 10, panY + 22);
+
+        // Dialog line (typewriter)
+        const isOnOptions = dwarfInteractPage >= DWARF_INTERACT_LINES.length - 1 &&
+                            dwarfInteractChars >= (DWARF_INTERACT_LINES[dwarfInteractPage] || '').length;
+        const currentLine = DWARF_INTERACT_LINES[dwarfInteractPage] || '';
+        const visibleLine = currentLine.substring(0, dwarfInteractChars);
+        const textX = pad + portraitSize + 10;
+        const textW = panW - textX - pad;
+
+        ctx.font = '10px Pixelify Sans';
+        ctx.fillStyle = '#f0e8d0';
+        ctx.textAlign = 'left';
+        // Render line breaks from \n
+        visibleLine.split('\n').forEach((row, ri) => {
+            ctx.fillText(row, textX, panY + 38 + ri * 16);
+        });
+
+        // Options (shown only on last page, once text is fully revealed)
+        if (isOnOptions) {
+            const optY = panY + panH - 38;
+            const opts = [
+                { label: 'Rest  (+1 ♥)', disabled: dwarfHasRested },
+                { label: 'Leave', disabled: false }
+            ];
+            opts.forEach((opt, oi) => {
+                const isSelected = dwarfInteractOption === oi;
+                ctx.font = isSelected ? 'bold 11px Pixelify Sans' : '11px Pixelify Sans';
+                ctx.fillStyle = opt.disabled ? '#555' : (isSelected ? '#FFD700' : '#aaa');
+                ctx.textAlign = 'left';
+                const lx = textX + oi * 120;
+                // Selection arrow
+                if (isSelected && !opt.disabled) {
+                    ctx.fillText('▶ ' + opt.label, lx, optY);
+                } else {
+                    ctx.fillText(opt.disabled ? '✗ ' + opt.label : '  ' + opt.label, lx, optY);
+                }
+            });
+
+            // Hint
+            ctx.font = '9px Pixelify Sans';
+            ctx.fillStyle = '#555';
+            ctx.textAlign = 'right';
+            ctx.fillText('[←/→] Select  [F/Enter] Confirm  [Esc] Close', panW - pad, panY + panH - 6);
+        } else {
+            // Not yet on options — show "press F to continue" hint
+            const textFullyShown = dwarfInteractChars >= currentLine.length;
+            ctx.font = '9px Pixelify Sans';
+            ctx.fillStyle = textFullyShown ? '#888' : '#333';
+            ctx.textAlign = 'right';
+            ctx.fillText(textFullyShown ? '[F] Continue...' : '[F] Skip', panW - pad, panY + panH - 6);
         }
     }
 

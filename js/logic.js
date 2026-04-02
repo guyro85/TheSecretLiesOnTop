@@ -30,16 +30,39 @@ function takeDamage() {
 function updateGame() {
     if (gameOver) return;
 
-    if (keys[39]) player.velX = Math.min(player.velX + 1.5, player.speed);
-    if (keys[37]) player.velX = Math.max(player.velX - 1.5, -player.speed);
-
-    player.velX *= friction;
-    player.velY += gravity;
-    player.x += player.velX;
-    player.y += player.velY;
+    // Freeze player movement during dwarf interaction
+    if (!dwarfInteracting) {
+        if (keys[39]) player.velX = Math.min(player.velX + 1.5, player.speed);
+        if (keys[37]) player.velX = Math.max(player.velX - 1.5, -player.speed);
+        player.velX *= friction;
+        player.velY += gravity;
+        player.x += player.velX;
+        player.y += player.velY;
+    } else {
+        // Bleed off velocity so player doesn't slide after chat opens
+        player.velX *= 0.7;
+    }
 
     if (starTimer > 0) starTimer--;
     if (player.invTimer > 0) player.invTimer--;
+
+    // Bubble typewriter: activate as soon as tavern appears, reveal 1 char every ~50ms
+    if (tavernState >= 1 && !dwarfDialogActive) dwarfDialogActive = true;
+    if (dwarfDialogActive && dwarfDialogChars < DWARF_DIALOG_TEXT.length) {
+        if (Math.floor(Date.now() / 50) !== Math.floor((Date.now() - FRAME_TIME) / 50)) {
+            dwarfDialogChars = Math.min(dwarfDialogChars + 1, DWARF_DIALOG_TEXT.length);
+        }
+    }
+
+    // Interaction panel typewriter: reveal chars while interacting and not on the options page
+    if (dwarfInteracting && dwarfInteractPage < DWARF_INTERACT_LINES.length) {
+        const target = DWARF_INTERACT_LINES[dwarfInteractPage].length;
+        if (dwarfInteractChars < target) {
+            if (Math.floor(Date.now() / 45) !== Math.floor((Date.now() - FRAME_TIME) / 45)) {
+                dwarfInteractChars = Math.min(dwarfInteractChars + 1, target);
+            }
+        }
+    }
 
     // Screen scroll
     if (player.y < canvas.height / 4) {

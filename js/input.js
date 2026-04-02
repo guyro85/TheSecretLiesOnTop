@@ -42,12 +42,73 @@ window.addEventListener('keydown', function(e) {
             player.velY = baseJump - Math.abs(player.velX) * 0.5;
         }
         if (e.key === 'Escape') {
-            isPaused = !isPaused;
+            if (dwarfInteracting) {
+                // Close interaction panel
+                dwarfInteracting = false;
+            } else {
+                isPaused = !isPaused;
+            }
+        }
+
+        // Dwarf interaction — open / advance / confirm
+        if (e.key === 'f' || e.key === 'F') {
+            if (tavernState >= 1 && tavernFloorY !== null) {
+                const dSize = 40;
+                const dX = canvas.width - 40 - dSize;
+                const dwarfCenterX = dX + dSize / 2;
+                const dist = Math.abs((player.x + player.width / 2) - dwarfCenterX);
+
+                if (!dwarfInteracting && dist <= DWARF_INTERACT_RANGE) {
+                    // Open the panel on page 0
+                    dwarfInteracting = true;
+                    dwarfInteractPage = 0;
+                    dwarfInteractChars = 0;
+                    dwarfInteractOption = 0;
+                } else if (dwarfInteracting) {
+                    const currentLine = DWARF_INTERACT_LINES[dwarfInteractPage] || '';
+                    if (dwarfInteractChars < currentLine.length) {
+                        // Skip typewriter — show full line immediately
+                        dwarfInteractChars = currentLine.length;
+                    } else if (dwarfInteractPage < DWARF_INTERACT_LINES.length - 1) {
+                        // Advance to next dialog page
+                        dwarfInteractPage++;
+                        dwarfInteractChars = 0;
+                    } else {
+                        // On last page — confirm selected option
+                        if (dwarfInteractOption === 0 && !dwarfHasRested) {
+                            // Rest: restore 1 heart
+                            player.health = Math.min(player.health + 1, player.maxHealth);
+                            dwarfHasRested = true;
+                        }
+                        // Either way, close panel
+                        dwarfInteracting = false;
+                    }
+                }
+            }
+        }
+
+        // Option navigation while interaction panel is on the last page
+        if (dwarfInteracting && dwarfInteractPage === DWARF_INTERACT_LINES.length - 1 &&
+            dwarfInteractChars >= (DWARF_INTERACT_LINES[dwarfInteractPage] || '').length) {
+            if (e.key === 'ArrowUp' || e.key === 'ArrowDown' ||
+                e.key === 'w' || e.key === 'W' || e.key === 's' || e.key === 'S') {
+                dwarfInteractOption = dwarfInteractOption === 0 ? 1 : 0;
+                e.preventDefault();
+            }
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (dwarfInteractOption === 0 && !dwarfHasRested) {
+                    player.health = Math.min(player.health + 1, player.maxHealth);
+                    dwarfHasRested = true;
+                }
+                dwarfInteracting = false;
+            }
         }
     }
 
-    // Menu keyboard navigation (menus + pause screen + game over)
-    if ((gameState !== 'PLAYING' && gameState !== 'GAME_OVER') || isPaused || gameState === 'GAME_OVER') {
+    // Menu keyboard navigation (menus + pause screen + game over — NOT during dwarf chat)
+    if (!dwarfInteracting &&
+        ((gameState !== 'PLAYING' && gameState !== 'GAME_OVER') || isPaused || gameState === 'GAME_OVER')) {
         if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
             e.preventDefault();
             selectedMenuIndex = (selectedMenuIndex + 1) % Math.max(1, menuButtons.length);

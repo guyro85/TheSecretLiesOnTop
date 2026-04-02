@@ -30,6 +30,13 @@ function restartGame() {
     tavernY = 0;
     tavernFloorY = null;
     tavernRoofY = null;
+    dwarfDialogChars = 0;
+    dwarfDialogActive = false;
+    dwarfInteracting = false;
+    dwarfInteractPage = 0;
+    dwarfInteractChars = 0;
+    dwarfInteractOption = 0;
+    dwarfHasRested = false;
     bullets = [];
     keys.length = 0;
     player.x = canvas.width / 2;
@@ -139,7 +146,12 @@ function loadImages(callback) {
         'wall_banner_yellow': 'wall_banner_yellow.png',
         'wall_banner_green': 'wall_banner_green.png',
         'wall_fountain_1': 'wall_fountain_top_1.png',
-        'wall_fountain_2': 'wall_fountain_top_2.png'
+        'wall_fountain_2': 'wall_fountain_top_2.png',
+        'dwarf_idle_0': 'dwarf_m_idle_anim_f0.png',
+        'dwarf_idle_1': 'dwarf_m_idle_anim_f1.png',
+        'dwarf_idle_2': 'dwarf_m_idle_anim_f2.png',
+        'dwarf_idle_3': 'dwarf_m_idle_anim_f3.png',
+        'dialog_bubble': 'DialogBouble.png'
     };
 
     let loadedCount = 0;
