@@ -83,6 +83,8 @@ function gameLoop(timestamp) {
     if (deltaTime > 250) deltaTime = 250;
 
     if (assetsLoaded) {
+        updateBackgroundMusic();
+        
         accumulator += deltaTime;
         while (accumulator >= FRAME_TIME) {
             if (gameState === 'PLAYING' && !isPaused) {

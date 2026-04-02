@@ -51,7 +51,7 @@ let assetsLoaded = false;
 let images = {};
 
 // Tavern Logic
-const TAVERN_SPAWN_PLATFORM = 20; // Changed from 200 for easier testing
+const TAVERN_SPAWN_PLATFORM = 100;
 let tavernState = 0; // 0: Default, 1: Spawning, 2: Locked, 3: Passed
 let tavernY = 0;
 let tavernFloorY = null;
@@ -83,3 +83,33 @@ const DWARF_STORY_LINES = [
 let dwarfStoryMode = false;     // true while reading the story sub-dialog
 let dwarfStoryPage = 0;         // current page of the story
 let dwarfStoryChars = 0;        // typewriter progress for story page
+
+// Background Music
+const bgmMenu = new Audio('usedAssets/MainMenuTheme.mp3');
+bgmMenu.loop = true;
+const bgmGame = new Audio('usedAssets/GameTheme.mp3');
+bgmGame.loop = true;
+
+let currentBGM = null;
+let musicEnabled = true;
+
+function updateBackgroundMusic() {
+    if (!musicEnabled) return;
+    
+    const isMainMenuState = (gameState === 'START_MENU' || gameState === 'HIGH_SCORES' || gameState === 'OPTIONS' || gameState === 'CREDITS');
+    let targetBGM = isMainMenuState ? bgmMenu : bgmGame;
+    
+    if (currentBGM !== targetBGM) {
+        if (currentBGM) {
+            currentBGM.pause();
+            currentBGM.currentTime = 0;
+        }
+        currentBGM = targetBGM;
+        if (currentBGM) {
+            currentBGM.play().catch(e => {
+                // Browsers block autoplay until the user interacts with the page (click/key)
+                currentBGM = null; // Reset so it tries again on next update
+            });
+        }
+    }
+}

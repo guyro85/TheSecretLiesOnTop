@@ -371,14 +371,16 @@ function updateBullets() {
             continue;
         }
 
-        // Collision: bullet touches player → take damage
+        // Collision: bullet touches player
         if (!gameOver &&
             player.x < b.x + b.r &&
             player.x + player.width > b.x - b.r &&
             player.y < b.y + b.r &&
             player.y + player.height > b.y - b.r
         ) {
-            takeDamage();
+            if (starTimer <= 0) {
+                takeDamage();
+            }
             bullets.splice(i, 1);
         }
     }
