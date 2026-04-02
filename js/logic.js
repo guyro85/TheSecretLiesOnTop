@@ -247,6 +247,9 @@ function updateGame() {
         platform.spring = (!platform.star && Math.random() < 0.04)
             ? { offsetX: Math.floor(Math.max(0, newW / 2 - 8)), width: Math.min(16, newW), height: 14 }
             : null;
+        platform.coin = (!platform.star && !platform.spring && Math.random() < 0.15)
+            ? { offsetX: Math.floor(Math.random() * Math.max(1, newW - 16)), width: 16, height: 16, collected: false }
+            : null;
         platform.enemy = createEnemy(platform);
     });
 
@@ -303,17 +306,34 @@ function updateGame() {
     // Star collection
     platforms.forEach(platform => {
         const st = platform.star;
-        if (!st || st.collected) return;
-        const sx = platform.x + st.offsetX;
-        const sy = platform.y - st.height;
-        if (
-            player.x < sx + st.width &&
-            player.x + player.width > sx &&
-            player.y < sy + st.height &&
-            player.y + player.height > sy
-        ) {
-            st.collected = true;
-            starTimer = 360; // 6 seconds at 60 fps
+        if (st && !st.collected) {
+            const sx = platform.x + st.offsetX;
+            const sy = platform.y - st.height;
+            if (
+                player.x < sx + st.width &&
+                player.x + player.width > sx &&
+                player.y < sy + st.height &&
+                player.y + player.height > sy
+            ) {
+                st.collected = true;
+                starTimer = 360; // 6 seconds at 60 fps
+            }
+        }
+
+        const co = platform.coin;
+        if (co && !co.collected) {
+            const cx = platform.x + co.offsetX;
+            const cy = platform.y - co.height;
+            if (
+                player.x < cx + co.width &&
+                player.x + player.width > cx &&
+                player.y < cy + co.height &&
+                player.y + player.height > cy
+            ) {
+                co.collected = true;
+                coins++;
+                localStorage.setItem('greatTowerCoins', coins.toString());
+            }
         }
     });
 

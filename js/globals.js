@@ -23,6 +23,7 @@ let speedMult = 1;
 let starTimer = 0; // frames of star-power remaining
 
 let highScores = JSON.parse(localStorage.getItem('greatTowerHighScores')) || [];
+let coins = parseInt(localStorage.getItem('greatTowerCoins')) || 0;
 
 // Platform numbering
 let platformCounter = 0;

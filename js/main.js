@@ -156,6 +156,10 @@ function loadImages(callback) {
         'dwarf_idle_1': 'dwarf_m_idle_anim_f1.png',
         'dwarf_idle_2': 'dwarf_m_idle_anim_f2.png',
         'dwarf_idle_3': 'dwarf_m_idle_anim_f3.png',
+        'coin_0': 'coin_anim_f0.png',
+        'coin_1': 'coin_anim_f1.png',
+        'coin_2': 'coin_anim_f2.png',
+        'coin_3': 'coin_anim_f3.png',
         'dialog_bubble': 'DialogBouble.png'
     };
 

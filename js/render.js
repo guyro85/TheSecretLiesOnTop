@@ -436,17 +436,26 @@ function drawGameplay() {
         }
 
         // Floor label on multiples of 10
-        if (platform.number % 10 === 0) {
+        if (platform.number > 0 && platform.number % 10 === 0) {
             ctx.save();
-            ctx.font = 'bold 9px Pixelify Sans';
+            ctx.font = '13px Pixelify Sans';
             ctx.textAlign = 'center';
-            ctx.lineWidth = 2;
-            ctx.strokeStyle = 'black';
-            ctx.fillStyle = 'white';
+            
             const label = 'FLOOR ' + platform.number;
             const cx = platform.x + platform.width / 2;
-            ctx.strokeText(label, cx, platform.y + 8);
-            ctx.fillText(label, cx, platform.y + 8);
+            const cy = platform.y + 24; // Hand cleanly beneath the platform
+
+            // Exact 1px offset outline (much cleaner than strokeText for small fonts)
+            ctx.fillStyle = '#111';
+            ctx.fillText(label, cx + 1, cy);
+            ctx.fillText(label, cx - 1, cy);
+            ctx.fillText(label, cx, cy + 1);
+            ctx.fillText(label, cx, cy - 1);
+
+            // Fill
+            ctx.fillStyle = '#FFD700';
+            ctx.fillText(label, cx, cy);
+            
             ctx.restore();
         }
 
@@ -476,6 +485,16 @@ function drawGameplay() {
             const cx = platform.x + st.offsetX + st.width / 2;
             const cy = platform.y - st.height / 2;
             drawStarShape(cx, cy, 8, '#FFD700');
+        }
+
+        // Coin collectible
+        if (platform.coin && !platform.coin.collected) {
+            const co = platform.coin;
+            const cFrame = Math.floor(Date.now() / 150) % 4;
+            const cSprite = images[`coin_${cFrame}`];
+            if (cSprite) {
+                ctx.drawImage(cSprite, platform.x + co.offsetX, platform.y - co.height, co.width, co.height);
+            }
         }
     });
 
@@ -597,6 +616,30 @@ function drawGameplay() {
         ctx.font = 'bold 13px Pixelify Sans';
         ctx.textAlign = 'left';
         ctx.fillText(Math.ceil(starTimer / 60) + 's', 36, 69);
+    }
+
+    // HUD - Coins (top right, directly left of hearts)
+    const coinsRightX = canvas.width - (player.maxHealth * 23) - 10;
+    ctx.fillStyle = '#FFD700'; // Gold
+    ctx.textAlign = 'right';
+    ctx.font = 'bold 18px Pixelify Sans';
+    
+    // Smooth pixel shadow for text
+    ctx.shadowColor = 'black';
+    ctx.shadowBlur = 4;
+    ctx.shadowOffsetX = 2;
+    ctx.shadowOffsetY = 2;
+    ctx.fillText(coins.toString(), coinsRightX, 24);
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 0;
+    
+    // Coin Icon
+    const uiCFrame = Math.floor(Date.now() / 150) % 4;
+    const uiCSprite = images[`coin_${uiCFrame}`];
+    const textWidth = ctx.measureText(coins.toString()).width;
+    if (uiCSprite) {
+        ctx.drawImage(uiCSprite, coinsRightX - textWidth - 24, 7, 20, 20);
     }
 
     // HUD - Hearts (top right)
