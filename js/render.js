@@ -25,26 +25,35 @@ function drawMenuBackground() {
 }
 
 function drawMenuTitle(title) {
-    ctx.fillStyle = 'white';
     ctx.textAlign = 'center';
-    ctx.font = '50px alagard';
-    ctx.shadowColor = 'black';
-    ctx.shadowBlur = 4;
-    ctx.shadowOffsetX = 2;
-    ctx.shadowOffsetY = 2;
-    const lines = title.split('\n');
-    const lineHeight = 50;
+    ctx.font = '64px alagard';
+    const lines = title.toUpperCase().split('\n');
+    const lineHeight = 64;
 
     // Shift up slightly to accommodate multiple lines
     let startY = lines.length > 1 ? 110 : 140;
 
     lines.forEach((line, i) => {
-        ctx.fillText(line, canvas.width / 2, startY + (i * lineHeight));
-    });
+        const y = startY + (i * lineHeight);
+        const cx = canvas.width / 2;
 
-    ctx.shadowBlur = 0;
-    ctx.shadowOffsetX = 0;
-    ctx.shadowOffsetY = 0;
+        // 2px Pixel Outline (simulating the 4 drop-shadows requested)
+        ctx.fillStyle = '#221B1B';
+        ctx.fillText(line, cx + 2, y);
+        ctx.fillText(line, cx - 2, y);
+        ctx.fillText(line, cx, y + 2);
+        ctx.fillText(line, cx, y - 2);
+
+        // The Gradient (Top to Bottom)
+        // Canvas gradient goes from y-55 (top of text) to y (bottom of text baseline approx)
+        const gradient = ctx.createLinearGradient(0, y - 55, 0, y);
+        gradient.addColorStop(0.2, '#F5E1C1');
+        gradient.addColorStop(0.5, '#D9A066');
+        gradient.addColorStop(0.9, '#8F563B');
+
+        ctx.fillStyle = gradient;
+        ctx.fillText(line, cx, y);
+    });
 }
 
 function drawTextButtons(buttons, startY, spacing) {
@@ -63,7 +72,7 @@ function drawTextButtons(buttons, startY, spacing) {
 
         // Check hover (mouse)
         const isMouseHovered = (mouseX >= boxX && mouseX <= boxX + width &&
-                                mouseY >= boxY && mouseY <= boxY + height);
+            mouseY >= boxY && mouseY <= boxY + height);
 
         // If mouse is hovering this button, sync keyboard selection index to it
         if (isMouseHovered) selectedMenuIndex = index;
@@ -151,23 +160,43 @@ function drawOptionsMenu() {
     drawMenuBackground();
     drawMenuTitle('Options');
 
-    ctx.fillRect(50, 170, canvas.width - 100, 200);
+    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+    ctx.fillRect(50, 170, canvas.width - 100, 230);
 
-    ctx.fillStyle = 'white';
-    ctx.textAlign = 'center';
-    ctx.font = '20px ' + (document.fonts.check('12px "Pixelify Sans"') ? 'Pixelify Sans' : 'sans-serif');
-    ctx.fillText('Music: On', canvas.width / 2, 220);
-    ctx.fillText('SFX: On', canvas.width / 2, 270);
-    ctx.fillText('Controls: Keyboard/Touch', canvas.width / 2, 320);
+    const buttons = [
+        {
+            text: 'Music: ' + (musicEnabled ? 'On' : 'Off'),
+            action: () => {
+                musicEnabled = !musicEnabled;
+                if (!musicEnabled && currentBGM) {
+                    currentBGM.pause();
+                    currentBGM.currentTime = 0;
+                    currentBGM = null;
+                }
+            }
+        },
+        {
+            text: 'SFX: On (WIP)',
+            action: () => { }
+        },
+        {
+            text: 'Controls: Auto',
+            action: () => { }
+        },
+        {
+            text: 'Back',
+            action: () => { gameState = 'START_MENU'; selectedMenuIndex = 0; }
+        }
+    ];
 
-    const buttons = [{ text: 'Back', action: () => { gameState = 'START_MENU'; } }];
-    drawTextButtons(buttons, 470, 45);
+    drawTextButtons(buttons, 210, 50);
 }
 
 function drawCreditsMenu() {
     drawMenuBackground();
     drawMenuTitle('Credits');
 
+    ctx.fillStyle = 'rgba(0,0,0,0.6)';
     ctx.fillRect(50, 170, canvas.width - 100, 200);
 
     ctx.fillStyle = 'white';
@@ -179,12 +208,42 @@ function drawCreditsMenu() {
     ctx.fillText('Bigfoot Studios', canvas.width / 2, 250);
 
     ctx.fillStyle = 'white';
-    ctx.font = '16px ' + (document.fonts.check('12px "Pixelify Sans"') ? 'Pixelify Sans' : 'sans-serif');
-    ctx.fillText('Art & Programming: Guy', canvas.width / 2, 300);
-    ctx.fillText('Music: TBA', canvas.width / 2, 330);
+    ctx.font = '20px ' + (document.fonts.check('12px "Pixelify Sans"') ? 'Pixelify Sans' : 'sans-serif');
+    ctx.fillText('Assets: Robert', canvas.width / 2, 300);
+    ctx.fillText('Programming: Guy', canvas.width / 2, 330);
 
-    const buttons = [{ text: 'Back', action: () => { gameState = 'START_MENU'; } }];
-    drawTextButtons(buttons, 470, 45);
+    const buttons = [{ text: 'Back', action: () => { gameState = 'START_MENU'; selectedMenuIndex = 0; } }];
+    drawTextButtons(buttons, 440, 45);
+}
+
+function drawInstructionsMenu() {
+    drawMenuBackground();
+    drawMenuTitle('How to Play');
+
+    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+    ctx.fillRect(50, 160, canvas.width - 100, 220);
+
+    ctx.fillStyle = 'white';
+    ctx.textAlign = 'center';
+    ctx.font = '18px ' + (document.fonts.check('12px "Pixelify Sans"') ? 'Pixelify Sans' : 'sans-serif');
+
+    ctx.fillText('1. Left/Right or A/D to move.', canvas.width / 2, 200);
+    ctx.fillText('2. Up, W, or Space to jump.', canvas.width / 2, 240);
+    ctx.fillText('3. Avoid the enemies.', canvas.width / 2, 280);
+    ctx.fillText('4. Collect stars for invincibility.', canvas.width / 2, 320);
+    ctx.fillText('5. Find the tavern to rest!', canvas.width / 2, 360);
+
+    const backAction = () => {
+        if (isPaused) {
+            gameState = 'PLAYING';
+        } else {
+            gameState = 'START_MENU';
+        }
+        selectedMenuIndex = 0;
+    };
+
+    const buttons = [{ text: 'Back', action: backAction }];
+    drawTextButtons(buttons, 440, 45);
 }
 
 function drawGame() {
@@ -196,6 +255,8 @@ function drawGame() {
         drawOptionsMenu();
     } else if (gameState === 'CREDITS') {
         drawCreditsMenu();
+    } else if (gameState === 'INSTRUCTIONS') {
+        drawInstructionsMenu();
     } else {
         drawGameplay();
     }
@@ -228,7 +289,7 @@ function drawGameplay() {
         if (!inTavernZone) {
             const leftNoise = Math.abs(Math.sin(logicalRow * 47.9898 + 3.1) * 43758.5453);
             const leftR = leftNoise - Math.floor(leftNoise);
-        if (leftR > 0.97) {
+            if (leftR > 0.97) {
                 const decorIdx = Math.floor(leftR * 100) % wallDecorations.length;
                 const decorKey = wallDecorations[decorIdx];
                 if (images[decorKey]) ctx.drawImage(images[decorKey], 0, y, tileSize, tileSize);
@@ -593,7 +654,7 @@ function drawGameplay() {
 
         // Dialog line (typewriter)
         const isOnOptions = dwarfInteractPage >= DWARF_INTERACT_LINES.length - 1 &&
-                            dwarfInteractChars >= (DWARF_INTERACT_LINES[dwarfInteractPage] || '').length;
+            dwarfInteractChars >= (DWARF_INTERACT_LINES[dwarfInteractPage] || '').length;
         const currentLine = DWARF_INTERACT_LINES[dwarfInteractPage] || '';
         const visibleLine = currentLine.substring(0, dwarfInteractChars);
         const textX = pad + portraitSize + 10;
@@ -612,8 +673,8 @@ function drawGameplay() {
             const optY = panY + panH - 38;
             const opts = [
                 { label: 'Rest (+1 ♥)', disabled: dwarfHasRested },
-                { label: 'His Story',   disabled: false },
-                { label: 'Leave',       disabled: false }
+                { label: 'His Story', disabled: false },
+                { label: 'Leave', disabled: false }
             ];
             opts.forEach((opt, oi) => {
                 const isSelected = dwarfInteractOption === oi;
@@ -727,7 +788,8 @@ function drawGameplay() {
         ctx.shadowOffsetY = 0;
 
         const pauseButtons = [
-            { text: 'Resume', action: () => { isPaused = false; } },
+            { text: 'Resume', action: () => { isPaused = false; selectedMenuIndex = 0; } },
+            { text: 'Instructions', action: () => { gameState = 'INSTRUCTIONS'; selectedMenuIndex = 0; } },
             { text: 'Main Menu', action: () => { isPaused = false; gameState = 'START_MENU'; selectedMenuIndex = 0; } }
         ];
         drawTextButtons(pauseButtons, canvas.height / 2, 55);

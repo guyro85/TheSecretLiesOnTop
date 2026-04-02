@@ -26,6 +26,7 @@ let highScores = JSON.parse(localStorage.getItem('greatTowerHighScores')) || [];
 
 // Platform numbering
 let platformCounter = 0;
+const AUTO_SCROLL_PLATFORM = 200;
 
 // Bullets
 let bullets = [];
@@ -95,10 +96,10 @@ let musicEnabled = true;
 
 function updateBackgroundMusic() {
     if (!musicEnabled) return;
-    
+
     const isMainMenuState = (gameState === 'START_MENU' || gameState === 'HIGH_SCORES' || gameState === 'OPTIONS' || gameState === 'CREDITS');
     let targetBGM = isMainMenuState ? bgmMenu : bgmGame;
-    
+
     if (currentBGM !== targetBGM) {
         if (currentBGM) {
             currentBGM.pause();

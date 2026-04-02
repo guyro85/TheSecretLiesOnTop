@@ -32,8 +32,8 @@ function updateGame() {
 
     // Freeze player movement during dwarf interaction
     if (!dwarfInteracting) {
-        if (keys[39]) player.velX = Math.min(player.velX + 1.5, player.speed);
-        if (keys[37]) player.velX = Math.max(player.velX - 1.5, -player.speed);
+        if (keys[39] || keys[68]) player.velX = Math.min(player.velX + 1.5, player.speed); // Right or D
+        if (keys[37] || keys[65]) player.velX = Math.max(player.velX - 1.5, -player.speed); // Left or A
         player.velX *= friction;
         player.velY += gravity;
         player.x += player.velX;
@@ -75,10 +75,27 @@ function updateGame() {
     }
 
     // Screen scroll
+    let activeScroll = 0;
     if (player.y < canvas.height / 4) {
-        const scrollAmount = Math.abs(player.velY);
-        speedMult = Math.min(4, speedMult + scrollAmount * 0.015);
-        score += Math.ceil(scrollAmount * speedMult * 0.5);
+        activeScroll = Math.abs(player.velY);
+    }
+    
+    let scrollAmount = activeScroll;
+    
+    // Auto-scroll logic: push the screen up steadily
+    if (platformCounter >= AUTO_SCROLL_PLATFORM && !dwarfInteracting) {
+        // Starts at 0.5px/frame, gradually increases to max 2.5px/frame
+        let autoScrollSpeed = 0.5 + (platformCounter - AUTO_SCROLL_PLATFORM) * 0.002;
+        autoScrollSpeed = Math.min(autoScrollSpeed, 2.5);
+        scrollAmount = Math.max(scrollAmount, autoScrollSpeed);
+    }
+
+    if (scrollAmount > 0) {
+        if (activeScroll > 0) {
+            speedMult = Math.min(4, speedMult + activeScroll * 0.015);
+            score += Math.ceil(activeScroll * speedMult * 0.5);
+        }
+        
         player.y += scrollAmount;
         cameraY += scrollAmount; // Track camera scroll for background
 
