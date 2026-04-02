@@ -37,6 +37,9 @@ function restartGame() {
     dwarfInteractChars = 0;
     dwarfInteractOption = 0;
     dwarfHasRested = false;
+    dwarfStoryMode = false;
+    dwarfStoryPage = 0;
+    dwarfStoryChars = 0;
     bullets = [];
     keys.length = 0;
     player.x = canvas.width / 2;

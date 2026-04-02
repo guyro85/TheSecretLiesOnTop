@@ -71,5 +71,15 @@ const DWARF_INTERACT_LINES = [
 let dwarfInteracting = false;   // is the interaction panel open?
 let dwarfInteractPage = 0;      // which dialog line we are on
 let dwarfInteractChars = 0;     // typewriter progress for the current panel line
-let dwarfInteractOption = 0;    // 0 = Rest, 1 = Leave
+let dwarfInteractOption = 0;    // 0 = Rest, 1 = His Story, 2 = Leave
 let dwarfHasRested = false;     // player may only rest once per tavern visit
+
+// Story sub-dialog triggered by "His Story" option
+const DWARF_STORY_LINES = [
+    "My brother has gone missing\nwithin his own half-finished tower.",
+    "Three days have passed\nwithout a sign.",
+    "Please help me find him\nand ensure his safe return."
+];
+let dwarfStoryMode = false;     // true while reading the story sub-dialog
+let dwarfStoryPage = 0;         // current page of the story
+let dwarfStoryChars = 0;        // typewriter progress for story page

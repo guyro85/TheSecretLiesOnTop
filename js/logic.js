@@ -64,6 +64,16 @@ function updateGame() {
         }
     }
 
+    // Story sub-dialog typewriter
+    if (dwarfStoryMode && dwarfStoryPage < DWARF_STORY_LINES.length) {
+        const target = DWARF_STORY_LINES[dwarfStoryPage].length;
+        if (dwarfStoryChars < target) {
+            if (Math.floor(Date.now() / 45) !== Math.floor((Date.now() - FRAME_TIME) / 45)) {
+                dwarfStoryChars = Math.min(dwarfStoryChars + 1, target);
+            }
+        }
+    }
+
     // Screen scroll
     if (player.y < canvas.height / 4) {
         const scrollAmount = Math.abs(player.velY);

@@ -50,6 +50,27 @@ window.addEventListener('keydown', function(e) {
             }
         }
 
+        // Story sub-mode: F/Enter advances story pages; Escape exits story back to options
+        if (dwarfStoryMode) {
+            if (e.key === 'f' || e.key === 'F' || e.key === 'Enter') {
+                e.preventDefault();
+                const storyLine = DWARF_STORY_LINES[dwarfStoryPage] || '';
+                if (dwarfStoryChars < storyLine.length) {
+                    dwarfStoryChars = storyLine.length; // skip typewriter
+                } else if (dwarfStoryPage < DWARF_STORY_LINES.length - 1) {
+                    dwarfStoryPage++;
+                    dwarfStoryChars = 0;
+                } else {
+                    // End of story — return to options
+                    dwarfStoryMode = false;
+                }
+            } else if (e.key === 'Escape') {
+                dwarfStoryMode = false;
+                e.preventDefault();
+            }
+            return; // absorb all other keys during story
+        }
+
         // Dwarf interaction — open / advance / confirm
         if (e.key === 'f' || e.key === 'F') {
             if (tavernState >= 1 && tavernFloorY !== null) {
@@ -59,7 +80,6 @@ window.addEventListener('keydown', function(e) {
                 const dist = Math.abs((player.x + player.width / 2) - dwarfCenterX);
 
                 if (!dwarfInteracting && dist <= DWARF_INTERACT_RANGE) {
-                    // Open the panel on page 0
                     dwarfInteracting = true;
                     dwarfInteractPage = 0;
                     dwarfInteractChars = 0;
@@ -67,42 +87,53 @@ window.addEventListener('keydown', function(e) {
                 } else if (dwarfInteracting) {
                     const currentLine = DWARF_INTERACT_LINES[dwarfInteractPage] || '';
                     if (dwarfInteractChars < currentLine.length) {
-                        // Skip typewriter — show full line immediately
-                        dwarfInteractChars = currentLine.length;
+                        dwarfInteractChars = currentLine.length; // skip typewriter
                     } else if (dwarfInteractPage < DWARF_INTERACT_LINES.length - 1) {
-                        // Advance to next dialog page
                         dwarfInteractPage++;
                         dwarfInteractChars = 0;
                     } else {
-                        // On last page — confirm selected option
-                        if (dwarfInteractOption === 0 && !dwarfHasRested) {
-                            // Rest: restore 1 heart
-                            player.health = Math.min(player.health + 1, player.maxHealth);
-                            dwarfHasRested = true;
-                        }
-                        // Either way, close panel
-                        dwarfInteracting = false;
+                        // Confirm current option
+                        _confirmDwarfOption();
                     }
                 }
             }
         }
 
-        // Option navigation while interaction panel is on the last page
-        if (dwarfInteracting && dwarfInteractPage === DWARF_INTERACT_LINES.length - 1 &&
-            dwarfInteractChars >= (DWARF_INTERACT_LINES[dwarfInteractPage] || '').length) {
-            if (e.key === 'ArrowUp' || e.key === 'ArrowDown' ||
-                e.key === 'w' || e.key === 'W' || e.key === 's' || e.key === 'S') {
-                dwarfInteractOption = dwarfInteractOption === 0 ? 1 : 0;
+        // Left/Right navigation on options page
+        const onOptionsPage = dwarfInteracting &&
+            dwarfInteractPage >= DWARF_INTERACT_LINES.length - 1 &&
+            dwarfInteractChars >= (DWARF_INTERACT_LINES[dwarfInteractPage] || '').length;
+
+        if (onOptionsPage) {
+            const numOpts = 3; // Rest, His Story, Leave
+            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+                dwarfInteractOption = (dwarfInteractOption - 1 + numOpts) % numOpts;
                 e.preventDefault();
-            }
-            if (e.key === 'Enter') {
+            } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+                dwarfInteractOption = (dwarfInteractOption + 1) % numOpts;
                 e.preventDefault();
-                if (dwarfInteractOption === 0 && !dwarfHasRested) {
-                    player.health = Math.min(player.health + 1, player.maxHealth);
-                    dwarfHasRested = true;
-                }
-                dwarfInteracting = false;
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                _confirmDwarfOption();
             }
+        }
+    }
+
+    // Helper: confirm whichever option is currently selected
+    function _confirmDwarfOption() {
+        if (dwarfInteractOption === 0 && !dwarfHasRested) {
+            // Rest — restore 1 heart
+            player.health = Math.min(player.health + 1, player.maxHealth);
+            dwarfHasRested = true;
+            dwarfInteracting = false;
+        } else if (dwarfInteractOption === 1) {
+            // His Story — enter story sub-mode
+            dwarfStoryMode = true;
+            dwarfStoryPage = 0;
+            dwarfStoryChars = 0;
+        } else {
+            // Leave (or Rest when already rested)
+            dwarfInteracting = false;
         }
     }
 

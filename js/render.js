@@ -608,31 +608,54 @@ function drawGameplay() {
         });
 
         // Options (shown only on last page, once text is fully revealed)
-        if (isOnOptions) {
+        if (isOnOptions && !dwarfStoryMode) {
             const optY = panY + panH - 38;
             const opts = [
-                { label: 'Rest  (+1 ♥)', disabled: dwarfHasRested },
-                { label: 'Leave', disabled: false }
+                { label: 'Rest (+1 ♥)', disabled: dwarfHasRested },
+                { label: 'His Story',   disabled: false },
+                { label: 'Leave',       disabled: false }
             ];
             opts.forEach((opt, oi) => {
                 const isSelected = dwarfInteractOption === oi;
-                ctx.font = isSelected ? 'bold 11px Pixelify Sans' : '11px Pixelify Sans';
-                ctx.fillStyle = opt.disabled ? '#555' : (isSelected ? '#FFD700' : '#aaa');
+                ctx.font = isSelected ? 'bold 10px Pixelify Sans' : '10px Pixelify Sans';
+                ctx.fillStyle = opt.disabled ? '#444' : (isSelected ? '#FFD700' : '#888');
                 ctx.textAlign = 'left';
-                const lx = textX + oi * 120;
-                // Selection arrow
-                if (isSelected && !opt.disabled) {
-                    ctx.fillText('▶ ' + opt.label, lx, optY);
-                } else {
-                    ctx.fillText(opt.disabled ? '✗ ' + opt.label : '  ' + opt.label, lx, optY);
-                }
+                const lx = textX + oi * 96;
+                ctx.fillText(isSelected ? '▶ ' + opt.label : (opt.disabled ? '✗ ' : '  ') + opt.label, lx, optY);
             });
 
-            // Hint
             ctx.font = '9px Pixelify Sans';
             ctx.fillStyle = '#555';
             ctx.textAlign = 'right';
             ctx.fillText('[←/→] Select  [F/Enter] Confirm  [Esc] Close', panW - pad, panY + panH - 6);
+
+        } else if (dwarfStoryMode) {
+            // Story sub-mode: replace text area with story page
+            const storyLine = DWARF_STORY_LINES[dwarfStoryPage] || '';
+            const storyVisible = storyLine.substring(0, dwarfStoryChars);
+            // Clear text area first
+            ctx.fillStyle = 'rgba(10, 5, 20, 0.92)';
+            ctx.fillRect(textX - 2, panY + 28, panW - textX - pad + 2, panH - 42);
+
+            ctx.font = '10px Pixelify Sans';
+            ctx.fillStyle = '#f0e8d0';
+            ctx.textAlign = 'left';
+            storyVisible.split('\n').forEach((row, ri) => {
+                ctx.fillText(row, textX, panY + 38 + ri * 16);
+            });
+
+            // Page indicator
+            ctx.font = '9px Pixelify Sans';
+            ctx.fillStyle = '#7a5c00';
+            ctx.textAlign = 'left';
+            ctx.fillText(`(${dwarfStoryPage + 1}/${DWARF_STORY_LINES.length})`, textX, panY + panH - 18);
+
+            const storyDone = dwarfStoryChars >= storyLine.length;
+            ctx.font = '9px Pixelify Sans';
+            ctx.fillStyle = storyDone ? '#888' : '#333';
+            ctx.textAlign = 'right';
+            const isLast = dwarfStoryPage >= DWARF_STORY_LINES.length - 1;
+            ctx.fillText(storyDone ? (isLast ? '[F] Close' : '[F] Next...') : '[F] Skip', panW - pad, panY + panH - 6);
         } else {
             // Not yet on options — show "press F to continue" hint
             const textFullyShown = dwarfInteractChars >= currentLine.length;
