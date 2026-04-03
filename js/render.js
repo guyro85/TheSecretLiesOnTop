@@ -119,7 +119,7 @@ function drawMainMenu() {
     const pTimer = Math.floor(Date.now() / 150) % 4;
     const spriteName = `${currentSkinId}_idle_${pTimer}`;
     if (images && images[spriteName]) {
-        const drawSize = 64; 
+        const drawSize = 64;
         const px = canvas.width / 2 - drawSize / 2;
         const py = canvas.height - 30 - drawSize;
         ctx.drawImage(images[spriteName], px, py, drawSize, drawSize);
@@ -137,7 +137,7 @@ function drawMainMenu() {
             ctx.fillStyle = 'white';
             ctx.fillText('<', px - 20, py + drawSize / 2 + 10);
             ctx.fillText('>', px + drawSize + 20, py + drawSize / 2 + 10);
-            
+
             // Note: Clicks for these are handled in input.js
             // Define hotzones globally for input.js to easily grab
             window.skinLeftArrowRect = { x: px - 35, y: py + drawSize / 2 - 20, w: 30, h: 40 };
@@ -165,14 +165,14 @@ function drawStoreMenu() {
     // Now manually mount store cards and inject their hitzones
     const startY = 120;
     const rowHeight = 70;
-    
+
     AVAILABLE_SKINS.forEach((skin, idx) => {
         const isOwned = ownedSkins.includes(skin.id);
         const y = startY + idx * rowHeight;
         const x = 40;
         const w = canvas.width - 80;
         const h = 60;
-        
+
         // Visual hover check
         const isHovered = (typeof mouseX !== 'undefined' && mouseX >= x && mouseX <= x + w && mouseY >= y && mouseY <= y + h);
 
@@ -195,7 +195,7 @@ function drawStoreMenu() {
         ctx.font = '20px Pixelify Sans';
         ctx.fillStyle = 'white';
         ctx.fillText(skin.name, x + 60, y + 27);
-        
+
         // Draw cost / status string
         ctx.font = 'bold 16px Pixelify Sans';
         if (isOwned) {
@@ -204,7 +204,7 @@ function drawStoreMenu() {
         } else {
             ctx.fillStyle = coins >= skin.cost ? '#FFD700' : '#FF4444';
             ctx.fillText(`${skin.cost} Coins`, x + 60, y + 47);
-            
+
             // Draw mini coin icon spinner next to the price
             const uiCFrame = Math.floor(Date.now() / 150) % 4;
             if (images[`coin_${uiCFrame}`]) {
@@ -486,6 +486,7 @@ function drawGameplay() {
                 ctx.font = '9px Pixelify Sans';
                 ctx.fillStyle = '#1a0a00';
                 ctx.textAlign = 'center';
+
                 // Word-wrap into two lines for narrow bubble
                 const words = visibleText.split(' ');
                 let line1 = '', line2 = '';
@@ -516,7 +517,7 @@ function drawGameplay() {
             const dist = Math.abs(playerCenterX - dCenterX);
             if (dist <= DWARF_INTERACT_RANGE && tavernState >= 1) {
                 ctx.save();
-                ctx.font = 'bold 11px Pixelify Sans';
+                ctx.font = 'bold 16px Pixelify Sans';
                 ctx.fillStyle = 'white';
                 ctx.strokeStyle = 'black';
                 ctx.lineWidth = 2;
@@ -534,9 +535,19 @@ function drawGameplay() {
         // Skip rendering invisible hitboxes for the tavern
         if (platform.isLadder || platform.isTavern) return;
 
-        // Colour: falling=Tomato, moving=Steel Blue, normal=Tan
-        ctx.fillStyle = platform.falling ? '#FF6347' : platform.moving ? '#4682B4' : '#D2B48C';
-        ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
+        const sprKey = platform.sprite || 'platform';
+        if (images[sprKey]) {
+            ctx.drawImage(images[sprKey], platform.x, platform.y, platform.width, platform.height);
+            // Red warning tint for falling platforms
+            if (platform.falling) {
+                ctx.fillStyle = 'rgba(255, 50, 50, 0.4)';
+                ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
+            }
+        } else {
+            // Fallback Colour: falling=Tomato, moving=Steel Blue, normal=Tan
+            ctx.fillStyle = platform.falling ? '#FF6347' : platform.moving ? '#4682B4' : '#D2B48C';
+            ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
+        }
 
         // Warning bar
         if (!platform.falling && platform.standTimer > 0) {
@@ -550,7 +561,7 @@ function drawGameplay() {
             ctx.save();
             ctx.font = '13px Pixelify Sans';
             ctx.textAlign = 'center';
-            
+
             const label = 'FLOOR ' + platform.number;
             const cx = platform.x + platform.width / 2;
             const cy = platform.y + 24; // Hand cleanly beneath the platform
@@ -565,7 +576,7 @@ function drawGameplay() {
             // Fill
             ctx.fillStyle = '#FFD700';
             ctx.fillText(label, cx, cy);
-            
+
             ctx.restore();
         }
 
@@ -733,7 +744,7 @@ function drawGameplay() {
     ctx.fillStyle = '#FFD700'; // Gold
     ctx.textAlign = 'right';
     ctx.font = 'bold 18px Pixelify Sans';
-    
+
     // Smooth pixel shadow for text
     ctx.shadowColor = 'black';
     ctx.shadowBlur = 4;
@@ -743,7 +754,7 @@ function drawGameplay() {
     ctx.shadowBlur = 0;
     ctx.shadowOffsetX = 0;
     ctx.shadowOffsetY = 0;
-    
+
     // Coin Icon
     const uiCFrame = Math.floor(Date.now() / 150) % 4;
     const uiCSprite = images[`coin_${uiCFrame}`];
@@ -800,7 +811,7 @@ function drawGameplay() {
         ctx.strokeRect(pad, panY + pad, portraitSize, portraitSize);
 
         // Speaker name
-        ctx.font = 'bold 11px Pixelify Sans';
+        ctx.font = 'bold 16px Pixelify Sans';
         ctx.fillStyle = '#FFD700';
         ctx.textAlign = 'left';
         ctx.fillText('Tavern Keeper', pad + portraitSize + 10, panY + 22);
@@ -813,12 +824,12 @@ function drawGameplay() {
         const textX = pad + portraitSize + 10;
         const textW = panW - textX - pad;
 
-        ctx.font = '10px Pixelify Sans';
+        ctx.font = '16px Pixelify Sans';
         ctx.fillStyle = '#f0e8d0';
         ctx.textAlign = 'left';
         // Render line breaks from \n
         visibleLine.split('\n').forEach((row, ri) => {
-            ctx.fillText(row, textX, panY + 38 + ri * 16);
+            ctx.fillText(row, textX, panY + 44 + ri * 20);
         });
 
         // Options (shown only on last page, once text is fully revealed)
@@ -831,14 +842,14 @@ function drawGameplay() {
             ];
             opts.forEach((opt, oi) => {
                 const isSelected = dwarfInteractOption === oi;
-                ctx.font = isSelected ? 'bold 10px Pixelify Sans' : '10px Pixelify Sans';
+                ctx.font = isSelected ? 'bold 16px Pixelify Sans' : '16px Pixelify Sans';
                 ctx.fillStyle = opt.disabled ? '#444' : (isSelected ? '#FFD700' : '#888');
                 ctx.textAlign = 'left';
-                const lx = textX + oi * 96;
+                const lx = textX + oi * 105;
                 ctx.fillText(isSelected ? '▶ ' + opt.label : (opt.disabled ? '✗ ' : '  ') + opt.label, lx, optY);
             });
 
-            ctx.font = '9px Pixelify Sans';
+            ctx.font = '16px Pixelify Sans';
             ctx.fillStyle = '#555';
             ctx.textAlign = 'right';
             ctx.fillText('[←/→] Select  [F/Enter] Confirm  [Esc] Close', panW - pad, panY + panH - 6);
@@ -851,21 +862,21 @@ function drawGameplay() {
             ctx.fillStyle = 'rgba(10, 5, 20, 0.92)';
             ctx.fillRect(textX - 2, panY + 28, panW - textX - pad + 2, panH - 42);
 
-            ctx.font = '10px Pixelify Sans';
+            ctx.font = '16px Pixelify Sans';
             ctx.fillStyle = '#f0e8d0';
             ctx.textAlign = 'left';
             storyVisible.split('\n').forEach((row, ri) => {
-                ctx.fillText(row, textX, panY + 38 + ri * 16);
+                ctx.fillText(row, textX, panY + 44 + ri * 20);
             });
 
             // Page indicator
-            ctx.font = '9px Pixelify Sans';
+            ctx.font = '16px Pixelify Sans';
             ctx.fillStyle = '#7a5c00';
             ctx.textAlign = 'left';
             ctx.fillText(`(${dwarfStoryPage + 1}/${DWARF_STORY_LINES.length})`, textX, panY + panH - 18);
 
             const storyDone = dwarfStoryChars >= storyLine.length;
-            ctx.font = '9px Pixelify Sans';
+            ctx.font = '16px Pixelify Sans';
             ctx.fillStyle = storyDone ? '#888' : '#333';
             ctx.textAlign = 'right';
             const isLast = dwarfStoryPage >= DWARF_STORY_LINES.length - 1;
@@ -873,7 +884,7 @@ function drawGameplay() {
         } else {
             // Not yet on options — show "press F to continue" hint
             const textFullyShown = dwarfInteractChars >= currentLine.length;
-            ctx.font = '9px Pixelify Sans';
+            ctx.font = '16px Pixelify Sans';
             ctx.fillStyle = textFullyShown ? '#888' : '#333';
             ctx.textAlign = 'right';
             ctx.fillText(textFullyShown ? '[F] Continue...' : '[F] Skip', panW - pad, panY + panH - 6);

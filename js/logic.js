@@ -241,6 +241,12 @@ function updateGame() {
         platform.moveSpeed = 0.6;
         platform.moveRange = 55;
         platform.moveOriginY = platform.y;
+
+        if (platform.moving) {
+            platform.sprite = 'platform_stone';
+        } else {
+            platform.sprite = 'platform';
+        }
         platform.star = Math.random() < 0.05
             ? { offsetX: Math.floor(Math.random() * Math.max(1, newW - 16)), width: 16, height: 16, collected: false }
             : null;

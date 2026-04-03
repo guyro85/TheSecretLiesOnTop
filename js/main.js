@@ -192,7 +192,10 @@ function loadImages(callback) {
         'coin_1': 'coin_anim_f1.png',
         'coin_2': 'coin_anim_f2.png',
         'coin_3': 'coin_anim_f3.png',
-        'dialog_bubble': 'DialogBouble.png'
+        'dialog_bubble': 'DialogBouble.png',
+        'platform': 'wood_platform.png',
+        'platform_stone': 'stone_platform.png',
+        'platform_wood_2': 'wood_platform_2.png'
     };
 
     let loadedCount = 0;

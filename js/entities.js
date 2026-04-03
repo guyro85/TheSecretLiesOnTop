@@ -59,6 +59,13 @@ function createPlatform(x, y, forcedWidth) {
     p.moveSpeed = 0.6;
     p.moveRange = 55;
     p.moveOriginY = y;
+    
+    // Texture logic
+    if (p.moving) {
+        p.sprite = 'platform_stone';
+    } else {
+        p.sprite = 'platform';
+    }
     // 5% star powerup
     p.star = Math.random() < 0.05
         ? { offsetX: Math.floor(Math.random() * Math.max(1, width - 16)), width: 16, height: 16, collected: false }
