@@ -1,32 +1,16 @@
 Features to add:
 
-- interaction with the dwarf at the tavern will be available when the distance of the player is below 30 px when pressing the F key (there will be a text displayed for the player to know that the interaction is available)
-
-- when the player interacts with the dwarf the small dialog box will disappear and instead there will be a large one that covers the screen with the following storyline:
-
-"My brother, has gone missing within his own half-finished tower. Three days have passed without a sign. Please help me find him and ensure his safe return." 
-
-then pressing F again will close the dialog.
-
 - in the pause menu there should be an option to press "Instructions" which will lead to a page that describes how to play"
 
-- The enemy projectile should not harm the player while he is in star mode (after collected a star)
-
-- there should be coins that spawn randomly but not so often on the platforms. collecting them will give the player coins which will be displayed next to the hearts icon. the coins remain between sessions.
-
-- the player should be able to purchase Skins of other characters with the coins which will be selectable in the main menu.
+- fix small text font
 
 - the platforms should look better and use an asset.
 
-- the tavern should spawn at platform 100 and the player's health will be restored to full when he enters the tavern.
 
 - the game ends on platform 1000 when he sees the body of the dwarf's brother and a large demon the ultimately kills the player as well at the top of the tower.
-
-- starting from platform 300, the screen will start moving up which will cause the player more difficulty. 
+ 
 
 - add the following sound:
-1. main menu music
-2. in game music
 3. player hop sound
 4. spring sound
 5. star collection sound
@@ -39,5 +23,3 @@ then pressing F again will close the dialog.
 12. Demon scene sound
 13. Game over sound
 14. UI button change sound
-
-- create credits and options menus

@@ -114,7 +114,7 @@ function drawMainMenu() {
         { text: 'Credits', action: () => { gameState = 'CREDITS'; selectedMenuIndex = 0; } },
         { text: 'Quit', action: () => { location.reload(); } }
     ];
-    drawTextButtons(buttons, 200, 45);
+    drawTextButtons(buttons, 220, 40);
 
     const pTimer = Math.floor(Date.now() / 150) % 4;
     const spriteName = `${currentSkinId}_idle_${pTimer}`;
